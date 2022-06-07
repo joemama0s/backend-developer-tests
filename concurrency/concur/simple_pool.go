@@ -1,6 +1,6 @@
 // Package concurrency implements worker pool interfaces, one simple and one a
 // bit more complex.
-package con
+package concur
 
 import "fmt"
 
@@ -14,7 +14,6 @@ type SimplePool interface {
 }
 
 type worker struct {
-	id int
 	jobs chan func()
 }
 
@@ -37,7 +36,7 @@ func (w worker) Submit(f func()) {
 
 func doWork(id int, jobs <-chan func()) {
 	for f := range jobs {
-		fmt.Printf("Worker %d", id)
+		fmt.Printf("Using worker id %d\n", id)
 		f()
 	}
 }

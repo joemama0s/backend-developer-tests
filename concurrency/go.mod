@@ -1,3 +1,3 @@
-module github.com/stackpath/backend-developer-tests/concurrency
+module github.com/joemama0s/backend-developer-tests/concurrency
 
 go 1.15

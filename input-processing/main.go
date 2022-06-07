@@ -2,7 +2,10 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
+	"io"
+	"log"
 	"os"
 )
 
@@ -10,8 +13,30 @@ func main() {
 	fmt.Println("SP// Backend Developer Test - Input Processing")
 	fmt.Println()
 
-	// Read STDIN into a new buffered reader
-	reader := bufio.NewReader(os.Stdin)
+	textFile := "mobydick.txt"
 
-	// TODO: Look for lines in the STDIN reader that contain "error" and output them.
+	if len(os.Args) > 1 {
+		textFile = os.Args[1]
+	}
+
+	f, err := os.Open(textFile)
+	defer f.Close()
+	if err != nil {
+		log.Fatalf("Error reading file: %s", err)
+	}
+	buf := bufio.NewReader(f)
+
+	for {
+		line, _, err := buf.ReadLine()
+		if err != nil {
+			if err == io.EOF{
+				return
+			}
+			log.Fatalf("Error reading line: %s", err)
+		}
+		if bytes.Contains(line, []byte("ERROR")) {
+			log.Printf(string(line))
+		}
+	}
+
 }

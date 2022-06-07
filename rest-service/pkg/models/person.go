@@ -2,8 +2,10 @@ package models
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
+	"github.com/gorilla/mux"
+	"log"
+	"net/http"
 
 	"github.com/satori/go.uuid"
 )
@@ -14,6 +16,10 @@ type Person struct {
 	FirstName   string    `json:"first_name"`
 	LastName    string    `json:"last_name"`
 	PhoneNumber string    `json:"phone_number"`
+}
+
+type PersonError struct {
+	Message string `json:"message"`
 }
 
 // people is the data source for the People RESTful service.
@@ -53,23 +59,39 @@ var people = []*Person{
 }
 
 // AllPeople returns all people in `people`.
-func AllPeople() []*Person {
-	return people
+func AllPeople(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(people)
+	if err != nil {
+		log.Fatal("Unable to encode json response")
+	}
+	return
 }
 
 // FindPersonByID searches for people in `people` the by their ID.
-func FindPersonByID(id uuid.UUID) (*Person, error) {
+//func FindPersonByID(id uuid.UUID) (*Person, error) {
+func FindPersonByID(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	params := mux.Vars(r)
+	id := uuid.Must(uuid.FromString(params["id"]))
 	for _, person := range people {
 		if person.ID == id {
-			return person, nil
+			json.NewEncoder(w).Encode(person)
+			return
 		}
 	}
-
-	return nil, errors.New(fmt.Sprintf("user ID %s not found", id.String()))
+	w.WriteHeader(404)
+	json.NewEncoder(w).Encode(&PersonError{Message: fmt.Sprintf("Unable to find person with UUID: %s", params["id"])})
+	return
 }
 
 // FindPeopleByName performs a case-sensitive search for people in `people` by first and last name.
-func FindPeopleByName(firstName, lastName string) []*Person {
+func FindPeopleByName(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	params := mux.Vars(r)
+	firstName := params["first_name"]
+	lastName := params["last_name"]
+
 	result := make([]*Person, 0)
 
 	for _, person := range people {
@@ -78,11 +100,17 @@ func FindPeopleByName(firstName, lastName string) []*Person {
 		}
 	}
 
-	return result
+	json.NewEncoder(w).Encode(result)
+	return
 }
 
 // FindPeopleByPhoneNumber searches for people in `people` by phone number.
-func FindPeopleByPhoneNumber(phoneNumber string) []*Person {
+func FindPeopleByPhoneNumber(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	params := mux.Vars(r)
+	phoneNumber := params["phone_number"]
+	phoneNumber = fmt.Sprintf("%s%s", "+", phoneNumber)
+
 	result := make([]*Person, 0)
 
 	for _, person := range people {
@@ -91,7 +119,7 @@ func FindPeopleByPhoneNumber(phoneNumber string) []*Person {
 		}
 	}
 
-	return result
+	json.NewEncoder(w).Encode(result)
 }
 
 // ToJSON represents a person as a JSON string.
